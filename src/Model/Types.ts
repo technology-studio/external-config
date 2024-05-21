@@ -4,16 +4,6 @@
  * @Copyright: Technology Studio
 **/
 
-export type GoogleConfig = {
-  google?: {
-    serviceAccount: {
-      keyFilePath: string,
-    },
-  },
-}
-
 export interface Config {
   [key: string]: Config | string,
 }
-
-export type ConfigShape = Config & GoogleConfig

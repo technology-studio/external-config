@@ -10,7 +10,6 @@ import { Log } from '@txo/log'
 
 import {
   type Config,
-  type ConfigShape,
 } from '../Model/Types'
 
 const log = new Log('txo.external-config.Api.GetRc')
@@ -20,9 +19,9 @@ let topDir = '/'
 
 const getHomePath = (): string | undefined => process.env[(process.platform === 'win32') ? 'USERPROFILE' : 'HOME']
 
-const parseConfigFile = (file: string): ConfigShape | null => {
+const parseConfigFile = (file: string): Config | null => {
   try {
-    return JSON.parse(file) as ConfigShape
+    return JSON.parse(file) as Config
   } catch (e) {
     log.error('parseConfigFile', e)
     return null
@@ -35,8 +34,8 @@ const combineConfigs = (configs: (Config | null)[]): Config => {
   return Object.assign({}, ...filteredConfigs) as Config
 }
 
-const getConfigInDir = (dir: string): null | ConfigShape => {
-  let config: null | ConfigShape = null
+const getConfigInDir = (dir: string): null | Config => {
+  let config: null | Config = null
 
   try {
     const fileName = path.join(dir, configFileName)
@@ -60,12 +59,12 @@ const walkUpTree = (startDir: string, endDir: string, callback: (path: string) =
   }
 }
 
-export const getConfig = (dir: string = process.cwd()): ConfigShape => {
+export const getConfig = (dir: string = process.cwd()): Config => {
   if (configFileName === '') {
     throw new Error('What is your config file name?  Use setConfigName.')
   }
 
-  const configs: (ConfigShape | null)[] = []
+  const configs: (Config | null)[] = []
 
   walkUpTree(dir, topDir, (currentDir) => {
     configs.push(getConfigInDir(currentDir))

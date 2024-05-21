@@ -5,11 +5,8 @@
 **/
 
 import type * as yup from 'yup'
-import { realpathSync } from 'fs'
-import untildify from 'untildify'
-import update from 'immutability-helper'
 
-import { type ConfigShape } from '../Model/Types'
+import { type Config } from '../Model/Types'
 
 import {
   getConfig,
@@ -20,23 +17,12 @@ const CONFIG_PATH = '~/.txo/config.json'
 
 setConfigName(CONFIG_PATH)
 
-export const getConfigMap = (configSchema: yup.ObjectSchema<ConfigShape>): ConfigShape => {
+export const getConfigMap = (configSchema: yup.ObjectSchema<Config>): Config => {
   const configMap = getConfig()
   try {
-    return Object.keys(configMap).reduce<Record<string, ConfigShape>>((nextConfigMap, profileName) => {
-      const config = configSchema.validateSync(configMap[profileName]) as ConfigShape
-      nextConfigMap[profileName] = config.google != null
-        ? update(config, {
-          google: {
-            serviceAccount: {
-              keyFilePath: {
-                $set: realpathSync(untildify(config.google.serviceAccount.keyFilePath)),
-              },
-            },
-          },
-        })
-        : config
-      return nextConfigMap
+    return Object.keys(configMap).reduce<Record<string, Config>>((nextConfigMap, profileName) => {
+      const config = configSchema.validateSync(configMap[profileName]) as Config
+      return { ...nextConfigMap, [profileName]: config }
     }, {})
   } catch (error) {
     // eslint-disable-next-line no-console
