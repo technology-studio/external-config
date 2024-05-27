@@ -8,10 +8,6 @@ import fs from 'fs'
 import path from 'path'
 import { Log } from '@txo/log'
 
-import {
-  type Config,
-} from '../Model/Types'
-
 const log = new Log('txo.external-config.Api.GetRc')
 
 let configFileName = ''
@@ -19,23 +15,17 @@ let topDir = '/'
 
 const getHomePath = (): string | undefined => process.env[(process.platform === 'win32') ? 'USERPROFILE' : 'HOME']
 
-const parseConfigFile = (file: string): Config | null => {
+const parseConfigFile = (file: string): Record<string, unknown> | null => {
   try {
-    return JSON.parse(file) as Config
+    return JSON.parse(file) as Record<string, unknown>
   } catch (e) {
     log.error('parseConfigFile', e)
     return null
   }
 }
 
-const combineConfigs = (configs: (Config | null)[]): Config => {
-  const filteredConfigs = configs.reverse()
-    .filter(config => config != null) as Config[]
-  return Object.assign({}, ...filteredConfigs) as Config
-}
-
-const getConfigInDir = (dir: string): null | Config => {
-  let config: null | Config = null
+const getConfigInDir = (dir: string): Record<string, unknown> | null => {
+  let config: Record<string, unknown> | null = null
 
   try {
     const fileName = path.join(dir, configFileName)
@@ -59,22 +49,26 @@ const walkUpTree = (startDir: string, endDir: string, callback: (path: string) =
   }
 }
 
-export const getConfig = (dir: string = process.cwd()): Config => {
+export const getConfigMap = (dir: string = process.cwd()): Record<string, unknown> | null => {
   if (configFileName === '') {
     throw new Error('What is your config file name?  Use setConfigName.')
   }
 
-  const configs: (Config | null)[] = []
-
   walkUpTree(dir, topDir, (currentDir) => {
-    configs.push(getConfigInDir(currentDir))
+    const _config = getConfigInDir(currentDir)
+    if (_config != null) {
+      return _config
+    }
   })
   const homePath = getHomePath()
   if (homePath != null && homePath !== '') {
-    configs.push(getConfigInDir(homePath))
+    const _config = getConfigInDir(homePath)
+    if (_config != null) {
+      return _config
+    }
   }
 
-  return combineConfigs(configs)
+  return null
 }
 
 export const setConfigName = (name: string): void => {

@@ -6,34 +6,24 @@
 
 import type * as yup from 'yup'
 
-import { type Config } from '../Model/Types'
-
 import {
-  getConfig,
-  setConfigName,
+  getConfigMap,
 } from './GetRc'
 
-const CONFIG_PATH = '~/.txo/config.json'
-
-setConfigName(CONFIG_PATH)
-
-export const getConfigMap = (configSchema: yup.ObjectSchema<Config>): Config => {
-  const configMap = getConfig()
+export const getConfig = (configSchema: yup.ObjectSchema<Record<string, unknown>>, profile = 'default'): unknown => {
+  const configMap = getConfigMap()
   try {
-    return Object.keys(configMap).reduce<Record<string, Config>>((nextConfigMap, profileName) => {
-      const config = configSchema.validateSync(configMap[profileName]) as Config
+    if (configMap == null) {
+      throw new Error('No config found')
+    }
+    const validatedConfigMap = Object.keys(configMap).reduce<Record<string, unknown>>((nextConfigMap, profileName) => {
+      const config = configSchema.validateSync(configMap[profileName])
       return { ...nextConfigMap, [profileName]: config }
     }, {})
+    return validatedConfigMap[profile]
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.error(`${CONFIG_PATH} is not valid: `, error)
-
-    if (error != null && typeof error === 'object' && 'errors' in error && Array.isArray(error.errors)) {
-      error.errors?.forEach(error => {
-        // eslint-disable-next-line no-console
-        console.error(error)
-      })
-    }
+    console.error(error)
     process.exit(-1)
   }
 }
