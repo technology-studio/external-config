@@ -10,25 +10,22 @@ import { Log } from '@txo/log'
 
 const log = new Log('txo.external-config.Api.GetRc')
 
-let configFileName = ''
-let topDir = '/'
-
 const getHomePath = (): string | undefined => process.env[(process.platform === 'win32') ? 'USERPROFILE' : 'HOME']
 
-const parseConfigFile = (file: string): Record<string, unknown> | null => {
+const parseConfigFile = <CONFIG extends Record<string, unknown>>(file: string): CONFIG | null => {
   try {
-    return JSON.parse(file) as Record<string, unknown>
+    return JSON.parse(file) as CONFIG
   } catch (e) {
     log.error('parseConfigFile', e)
     return null
   }
 }
 
-const getConfigInDir = (dir: string): Record<string, unknown> | null => {
-  let config: Record<string, unknown> | null = null
+const getConfigInDir = <CONFIG extends Record<string, unknown>>(dir: string, configFileName: string): CONFIG | null => {
+  let config: CONFIG | null = null
 
   try {
-    const fileName = path.join(dir, configFileName)
+    const fileName = path.join(dir, configFileName, 'config.json')
     const file = fs.readFileSync(fileName, 'utf8')
     config = parseConfigFile(file)
   } catch (e) {
@@ -49,32 +46,24 @@ const walkUpTree = (startDir: string, endDir: string, callback: (path: string) =
   }
 }
 
-export const getConfigMap = (dir: string = process.cwd()): Record<string, unknown> | null => {
-  if (configFileName === '') {
-    throw new Error('What is your config file name?  Use setConfigName.')
-  }
-
+export const getConfigMap = <CONFIG extends Record<string, unknown>>(
+  dir: string = process.cwd(),
+  topDir = '/',
+  configFileName: string,
+): CONFIG | null => {
   walkUpTree(dir, topDir, (currentDir) => {
-    const _config = getConfigInDir(currentDir)
+    const _config = getConfigInDir<CONFIG>(currentDir, configFileName)
     if (_config != null) {
       return _config
     }
   })
   const homePath = getHomePath()
   if (homePath != null && homePath !== '') {
-    const _config = getConfigInDir(homePath)
+    const _config = getConfigInDir<CONFIG>(homePath, configFileName)
     if (_config != null) {
       return _config
     }
   }
 
   return null
-}
-
-export const setConfigName = (name: string): void => {
-  configFileName = name
-}
-
-export const setTopDir = (dir: string): void => {
-  topDir = dir
 }

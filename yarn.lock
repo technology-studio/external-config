@@ -1535,6 +1535,11 @@
   resolved "https://registry.yarnpkg.com/@txo/tsconfig/-/tsconfig-1.1.1.tgz#0e746a34c5a5092459235e15588fb33e94cbf067"
   integrity sha512-YA8LdOoATb+LgwHlVFKxbR6i4xWkr1h6dGTqLh3HHGe25wYzJ7rixNNWucCXaY270Dmb33JQi5sDe6a1XtwRcg==
 
+"@txo/types@^1.7.0":
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/@txo/types/-/types-1.7.0.tgz#bb9db4417ceae237e51c14897f5c3f8b9f78cba2"
+  integrity sha512-mZfrfHMZK1hMDXKS7A8uvcBqqzYi5LLqg+wj4sDL77FZjQlZTdzXKlwwdco0HFamBPJS3iiDufW0Q/ZAyeRzSw==
+
 "@types/babel__core@^7.1.14":
   version "7.20.2"
   resolved "https://registry.yarnpkg.com/@types/babel__core/-/babel__core-7.20.2.tgz#215db4f4a35d710256579784a548907237728756"

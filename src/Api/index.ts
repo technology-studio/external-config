@@ -5,4 +5,3 @@
 **/
 
 export * from './ExternalConfig'
-export { setConfigName } from './GetRc'

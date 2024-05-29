@@ -4,26 +4,76 @@
  * @Copyright: Technology Studio
 **/
 
-import type * as yup from 'yup'
+import * as yup from 'yup'
+import { is } from '@txo/types'
 
 import {
   getConfigMap,
 } from './GetRc'
 
-export const getConfig = (configSchema: yup.ObjectSchema<Record<string, unknown>>, profile = 'default'): unknown => {
-  const configMap = getConfigMap()
-  try {
-    if (configMap == null) {
-      throw new Error('No config found')
-    }
-    const validatedConfigMap = Object.keys(configMap).reduce<Record<string, unknown>>((nextConfigMap, profileName) => {
-      const config = configSchema.validateSync(configMap[profileName])
-      return { ...nextConfigMap, [profileName]: config }
-    }, {})
-    return validatedConfigMap[profile]
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error(error)
-    process.exit(-1)
+type Config<CONFIG, PROFILE extends string> = {
+  [P in PROFILE]: CONFIG
+} & {
+  getProfileValue: <RETURN>(
+    profile: PROFILE,
+    getter: (config: CONFIG) => RETURN,
+    errorHandler: (profile: PROFILE) => Error,
+  ) => RETURN,
+}
+
+export const loadConfig = <CONFIG extends Record<string, unknown>, PROFILE extends string>(
+  relativePath: string,
+  schema: yup.ObjectSchema<CONFIG>,
+  topDir = '/',
+): Config<CONFIG, PROFILE> => {
+  const configMap = getConfigMap<CONFIG>(undefined, topDir, relativePath)
+
+  if (configMap == null) {
+    throw new Error('No config found')
+  }
+
+  const validatedConfigMap = Object.keys(configMap).reduce<{
+    [P in PROFILE]: CONFIG
+  } & {
+    default?: CONFIG,
+  }>((nextConfigMap, profileName) => {
+    const config = schema.validateSync(configMap[profileName])
+    return { ...nextConfigMap, [profileName]: config }
+    // eslint-disable-next-line @typescript-eslint/prefer-reduce-type-parameter, @typescript-eslint/consistent-type-assertions
+  }, {} as {
+    [P in PROFILE]: CONFIG
+  } & {
+    default?: CONFIG,
+  })
+
+  return {
+    ...validatedConfigMap,
+    getProfileValue: (profile, getter, errorHandler) => {
+      const config = validatedConfigMap[profile]
+      const value = getter(config)
+      if (config == null || value == null) {
+        const defaultConfig = is(validatedConfigMap.default)
+        if (defaultConfig == null) {
+          throw errorHandler(profile)
+        }
+        const defaultValue = getter(defaultConfig)
+        return defaultValue
+      }
+      return value
+    },
   }
 }
+
+const cfg = loadConfig<{
+  apiUrl: string,
+  apiKey: string,
+}, 'erik-slovak' | 'default'>(
+  '.test',
+  yup.object({
+    apiUrl: yup.string().url().required(),
+    apiKey: yup.string().required(),
+  }),
+)
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const a = cfg.getProfileValue('erik-slovak', (config) => config.apiKey, (profile) => new Error(`No api key found for profile ${profile}`))
