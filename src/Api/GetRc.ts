@@ -8,28 +8,30 @@ import fs from 'fs'
 import path from 'path'
 import { Log } from '@txo/log'
 
+import { type ConfigMap } from '../Model/Types'
+
 const log = new Log('txo.external-config.Api.GetRc')
 
 const getHomePath = (): string | undefined => process.env[(process.platform === 'win32') ? 'USERPROFILE' : 'HOME']
 
-const parseConfigFile = <CONFIG extends Record<string, unknown>>(file: string): CONFIG | null => {
+const parseConfigFile = (file: string): ConfigMap | null => {
   try {
-    return JSON.parse(file) as CONFIG
+    return JSON.parse(file) as ConfigMap
   } catch (e) {
     log.error('parseConfigFile', e)
     return null
   }
 }
 
-const getConfigInDir = <CONFIG extends Record<string, unknown>>(dir: string, configFileName: string): CONFIG | null => {
-  let config: CONFIG | null = null
+const getConfigInDir = (dir: string, configFileName: string): ConfigMap | null => {
+  let config: ConfigMap | null = null
 
   try {
     const fileName = path.join(dir, configFileName, 'config.json')
     const file = fs.readFileSync(fileName, 'utf8')
     config = parseConfigFile(file)
   } catch (e) {
-    // no config present
+    throw new Error(`Failed to read config file ${dir}/${configFileName}`)
   }
   return config
 }
@@ -46,20 +48,24 @@ const walkUpTree = (startDir: string, endDir: string, callback: (path: string) =
   }
 }
 
-export const getConfigMap = <CONFIG extends Record<string, unknown>>(
+export const getConfigMap = (
   dir: string = process.cwd(),
   topDir = '/',
   configFileName: string,
-): CONFIG | null => {
+): ConfigMap | null => {
+  let configMap: ConfigMap | null = null
   walkUpTree(dir, topDir, (currentDir) => {
-    const _config = getConfigInDir<CONFIG>(currentDir, configFileName)
+    const _config = getConfigInDir(currentDir, configFileName)
     if (_config != null) {
-      return _config
+      configMap = _config
     }
   })
+  if (configMap != null) {
+    return configMap
+  }
   const homePath = getHomePath()
   if (homePath != null && homePath !== '') {
-    const _config = getConfigInDir<CONFIG>(homePath, configFileName)
+    const _config = getConfigInDir(homePath, configFileName)
     if (_config != null) {
       return _config
     }
