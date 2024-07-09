@@ -8,7 +8,9 @@
       "Data/*": ["./__tests__/Data/*"],
       "Utils/*": ["./__tests__/Utils/*"],
       "src": ["./src"],
-      "src/*": ["./src/*"]
+      "src/*": ["./src/*"],
+      "@txo/external-config": ["./src"],
+      "@txo/external-config/*": ["./src/*"]
     }
   },
   "include": [
