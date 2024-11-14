@@ -17,12 +17,16 @@ import {
 } from './GetRc'
 
 type Config = {
-  configMap: ConfigMap,
   getProfileValue: (
     profile: keyof ConfigMap,
     getter: (config: ProfileConfig) => unknown,
     errorHandler: (profile: keyof ConfigMap) => Error,
   ) => unknown,
+} & ConfigMap
+
+// eslint-disable-next-line @typescript-eslint/ban-types -- NOTE: this is a workaround for typescript error
+function toConfigMap<T extends {}> (obj: T): T & ConfigMap {
+  return obj
 }
 
 export const loadConfig = (
@@ -56,8 +60,8 @@ export const loadConfig = (
     return value
   }
 
-  return {
-    configMap: validatedConfigMap,
+  return toConfigMap({
+    ...validatedConfigMap,
     getProfileValue,
-  }
+  })
 }
