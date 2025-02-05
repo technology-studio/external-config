@@ -1,0 +1,14 @@
+# OSX
+#
+.DS_Store
+.npmrc
+
+# node.js
+#
+node_modules/
+.eslintcache
+npm-debug.log
+yarn-error.log
+lib
+coverage
+*.tgz
