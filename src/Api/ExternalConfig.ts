@@ -5,11 +5,10 @@
 **/
 
 import type * as yup from 'yup'
-import { is } from '@txo/types'
 
-import {
-  type ProfileConfig,
-  type ConfigMap,
+import type {
+  ProfileConfig,
+  ConfigMap,
 } from '../Model/Types'
 
 import {
@@ -24,8 +23,8 @@ type Config = {
   ) => unknown,
 } & ConfigMap
 
-// eslint-disable-next-line @typescript-eslint/ban-types -- NOTE: this is a workaround for typescript error
-function toConfigMap<T extends {}> (obj: T): T & ConfigMap {
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type -- NOTE: this is a workaround for typescript error
+function toConfigMap<T extends {}>(obj: T): T & ConfigMap {
   return obj
 }
 
@@ -47,10 +46,12 @@ export const loadConfig = (
   }, {})
 
   const getProfileValue = (profile: keyof ConfigMap, getter: (config: ProfileConfig) => unknown, errorHandler: (profile: keyof ConfigMap) => Error): unknown => {
-    const config = validatedConfigMap[profile]
+    const { [profile]: config } = validatedConfigMap
     const value = getter(config)
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- TODO: figure out whether config really can be null since we validate it with schema
     if (config == null || value == null) {
-      const defaultConfig = is(validatedConfigMap.default)
+      const { default: defaultConfig } = validatedConfigMap
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- TODO: figure out whether config really can be null since we validate it with schema
       if (defaultConfig == null) {
         throw errorHandler(profile)
       }
